@@ -1,0 +1,146 @@
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from scipy import stats
+import math
+import statistics
+import seaborn as sns
+from IPython.display import display
+import sklearn
+print(sklearn.__version__)
+
+
+#顯示所有行
+pd.set_option('display.max_columns', None)
+#顯示所有列
+pd.set_option('display.max_rows', None)
+#顯示行設定
+pd.set_option('max_colwidth',100)
+
+import pingouin as pg
+import researchpy   
+
+#讀入資料
+
+df_train = pd.read_csv("Titanic_train.csv")
+print(df_train.info())
+
+#1.產稱一個新的變數 Survived_cate ，資料型態傳換成類別型態      
+#2.把題目中的 Survived 用 Survived_cate 來做分析 
+
+
+df_train['Survived_cate']=df_train['Survived']
+df_train['Survived_cate']=df_train['Survived_cate'].astype('object')
+print(df_train.info())
+
+
+# 先把遺失值刪除
+# 取出資料後，把遺失值刪除
+complete_data=df_train[['Age','Survived_cate','Sex']].dropna()
+print(complete_data)
+
+
+#Q1
+
+def age_map1(x): 
+        if(x>=65):
+            return('Y')
+        else: 
+            return('N')
+    
+complete_data['Age_above65']=complete_data['Age'].apply(age_map1)
+
+print(complete_data)
+
+
+#Q2
+
+def age_map2(row): 
+    if (row.Sex=='female'):
+        return('Y')
+    else: 
+        if(row.Age>=65):
+            return('Y')
+        else:
+            return('N')
+    
+    
+complete_data['Age_above65_female']=complete_data[['Age','Sex']].apply(age_map2,axis=1)
+print(complete_data)
+
+
+#Q3
+
+#Age_above65
+contTable = pd.crosstab(complete_data['Age_above65'], complete_data['Survived_cate'])
+contTable
+df = min(contTable.shape[0], contTable.shape[1]) - 1
+df
+crosstab, res = researchpy.crosstab(complete_data['Survived_cate'], complete_data['Age_above65'], test='chi-square')
+#print(res)
+print("Cramer's value is",res.loc[2,'results'])
+def judgment_CramerV(df,V):
+    if df == 1:
+        if V < 0.10:
+            qual = 'negligible'
+        elif V < 0.30:
+            qual = 'small'
+        elif V < 0.50:
+            qual = 'medium'
+        else:
+            qual = 'large'
+    elif df == 2:
+        if V < 0.07:
+            qual = 'negligible'
+        elif V < 0.21:
+            qual = 'small'
+        elif V < 0.35:
+            qual = 'medium'
+        else:
+            qual = 'large'
+    elif df == 3:
+        if V < 0.06:
+            qual = 'negligible'
+        elif V < 0.17:
+            qual = 'small'
+        elif V < 0.29:
+            qual = 'medium'
+        else:
+            qual = 'large'
+    elif df == 4:
+        if V < 0.05:
+            qual = 'negligible'
+        elif V < 0.15:
+            qual = 'small'
+        elif V < 0.25:
+            qual = 'medium'
+        else:
+            qual = 'large'
+    else:
+        if V < 0.05:
+            qual = 'negligible'
+        elif V < 0.13:
+            qual = 'small'
+        elif V < 0.22:
+            qual = 'medium'
+        else:
+            qual = 'large'
+    return(qual)
+
+judgment_CramerV(df,res.loc[2,'results'])
+
+
+
+#Age_above65_female
+contTable = pd.crosstab(complete_data['Age_above65_female'], complete_data['Survived_cate'])
+contTable
+df = min(contTable.shape[0], contTable.shape[1]) - 1
+df
+crosstab, res = researchpy.crosstab(complete_data['Survived_cate'], complete_data['Age_above65_female'], test='chi-square')
+#print(res)
+print("Cramer's value is",res.loc[2,'results'])
+
+
+judgment_CramerV(df,res.loc[2,'results'])
+
+#Age_above65_female 相關性較高
